@@ -9,8 +9,14 @@ if /I "%CMD%"=="demo" (
 
 if /I "%CMD%"=="train" (
   set TIMESTEPS=%~2
-  if "%TIMESTEPS%"=="" set TIMESTEPS=500000
-  python scripts\train_agent.py --timesteps %TIMESTEPS%
+  if "%TIMESTEPS%"=="" (
+    set TIMESTEPS=300000
+    python scripts\train_agent.py --timesteps %TIMESTEPS%
+    goto end
+  )
+  shift
+  shift
+  python scripts\train_agent.py --timesteps %TIMESTEPS% %*
   goto end
 )
 
