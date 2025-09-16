@@ -47,6 +47,8 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
         )
         self._last_wall_time = 0.0
         self._terminated = False
+        self._sel_col = -1
+        self._sel_row = -1
 
         # Observation: Dict(board:int32[8,3], selection:int32[2], optional time_left_norm)
         obs_spaces: dict[str, spaces.Space[Any]] = {
@@ -84,6 +86,10 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
 
             self._last_wall_time = time.perf_counter()
         self._terminated = False
+        self._sel_col = -1
+        self._sel_row = -1
+        # Ensure first row is visible
+        self._fall_tick()
         return self._obs(), self._info(pops_this_step=0)
 
     def step(self, action: int) -> tuple[dict[str, Any], float, bool, bool, dict[str, Any]]:  # noqa: C901
@@ -103,27 +109,37 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
             column = self.board.grid[:, col]
 
             if is_sel == 0:
-                # pick bottom-most existing number if any
+                # pick bottom-most existing number if any (do not remove yet)
                 nz = np.nonzero(column)[0]
                 if nz.size > 0:
                     bottom_idx = nz[-1]
                     val = int(column[bottom_idx])
-                    column[bottom_idx] = 0
                     self.selection[:] = (1, val)
+                    self._sel_col = col
+                    self._sel_row = int(bottom_idx)
                     reward += self.rewards.valid_action
                 else:
                     # invalid (empty column pick) – already has step cost applied
                     pass
             else:
-                # drop into column if space exists
-                # find highest empty from top
+                # drop into target column: remove from source pos then place
+                src_c = self._sel_col
+                src_r = self._sel_row
+                # If same column, remove first to compute correct top-empty
+                if col == src_c and 0 <= src_r < self.board.height:
+                    self.board.grid[src_r, src_c] = 0
+                    column = self.board.grid[:, col]
                 zeros = np.where(column == 0)[0]
                 if zeros.size > 0:
-                    top_empty = zeros[0]
+                    top_empty = int(zeros[0])
                     column[top_empty] = value
+                    # If different column, remove after placement
+                    if col != src_c and 0 <= src_r < self.board.height and 0 <= src_c < self.board.width:
+                        self.board.grid[src_r, src_c] = 0
                     self.selection[:] = (0, 0)
+                    self._sel_col = -1
+                    self._sel_row = -1
                     reward += self.rewards.valid_action
-                    # Pop in this column only
                     pops = self.board.pop_triples_in_column(col)
                     if pops:
                         reward += self.rewards.pop_cell * pops
@@ -194,6 +210,8 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
                 dtype=np.float32,
             )
             obs["time_left_norm"] = norm
+        # Include selected position for renderers
+        obs["sel_pos"] = np.array([self._sel_row, self._sel_col], dtype=np.int32)
         return obs
 
     def _info(self, *, pops_this_step: int) -> dict[str, Any]:
@@ -244,5 +262,8 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
             column[1:] = column[:-1]
             # spawn at top with constraint
             column[0] = self.board.spawn_value_for_column(col)
+            # update selection row when in this column
+            if self._sel_col == col and self._sel_row >= 0:
+                self._sel_row = min(self._sel_row + 1, self.board.height - 1)
             self.board.grid[:, col] = column
         return overflow

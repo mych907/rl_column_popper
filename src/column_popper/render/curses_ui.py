@@ -14,10 +14,41 @@ def _draw_board(stdscr: Any, obs: dict[str, Any], info: dict[str, Any]) -> None:
     stdscr.addstr(1, 0, header2)
     stdscr.addstr(2, 0, "=" * max(len(header1), len(header2)))
 
+    # Colors
+    try:
+        import curses
+
+        has_colors = curses.has_colors()
+        if has_colors:
+            curses.start_color()
+            curses.use_default_colors()
+            curses.init_pair(1, curses.COLOR_BLUE, -1)
+            blue = curses.color_pair(1)
+        else:
+            blue = 0
+    except Exception:
+        has_colors = False
+        blue = 0
+
+    sel_pos = obs.get("sel_pos", [-1, -1])
+    sel_r, sel_c = int(sel_pos[0]), int(sel_pos[1])
+
     # Top -> bottom
     for r in range(board.shape[0]):
-        row_vals = [str(int(x)) if int(x) != 0 else "." for x in board[r, :]]
-        stdscr.addstr(3 + r, 0, "  ".join(row_vals))
+        parts = []
+        for c in range(board.shape[1]):
+            v = int(board[r, c])
+            s = "." if v == 0 else str(v)
+            parts.append((s, blue if (r == sel_r and c == sel_c and int(selection[0]) == 1) else 0))
+        # write with coloring
+        x = 0
+        stdscr.move(3 + r, 0)
+        for s, attr in parts:
+            if attr:
+                stdscr.addstr(s, attr)
+            else:
+                stdscr.addstr(s)
+            stdscr.addstr("  ")
 
     holding = "none" if int(selection[0]) == 0 else str(int(selection[1]))
     stdscr.addstr(3 + board.shape[0] + 1, 0, f"Holding: {holding}")

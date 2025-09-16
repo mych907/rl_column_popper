@@ -15,6 +15,8 @@ class AnsiRenderer:
     def draw(self, obs: dict[str, Any], info: dict[str, Any]) -> None:
         board = obs["board"]
         selection = obs["selection"]
+        sel_pos = obs.get("sel_pos", [-1, -1])
+        sel_r, sel_c = int(sel_pos[0]), int(sel_pos[1])
 
         cols, _ = shutil.get_terminal_size((80, 24))
 
@@ -27,8 +29,17 @@ class AnsiRenderer:
 
         # Draw grid top->bottom
         for r in range(board.shape[0]):
-            row_vals = [str(int(x)) if int(x) != 0 else "." for x in board[r, :]]
-            print("  ".join(row_vals))
+            cells = []
+            for c in range(board.shape[1]):
+                v = int(board[r, c])
+                if v == 0:
+                    s = "."
+                else:
+                    s = str(v)
+                if r == sel_r and c == sel_c and int(selection[0]) == 1:
+                    s = f"\x1b[34m{s}\x1b[0m"
+                cells.append(s)
+            print("  ".join(cells))
 
         sel = int(selection[0])
         sval = int(selection[1])
