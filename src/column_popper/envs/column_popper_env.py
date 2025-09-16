@@ -38,7 +38,7 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
 
         # Observation: Dict(board:int32[8,3], selection:int32[2], optional time_left_norm)
         obs_spaces: dict[str, spaces.Space[Any]] = {
-            "board": spaces.Box(low=0, high=9, shape=(8, 3), dtype=np.int32),
+            "board": spaces.Box(low=0, high=9, shape=(12, 3), dtype=np.int32),
             "selection": spaces.Box(low=0, high=9, shape=(2,), dtype=np.int32),
         }
         if include_time_left_norm:
@@ -82,12 +82,12 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
             column = self.board.grid[:, col]
 
             if is_sel == 0:
-                # pick topmost number if any (topmost = highest non-zero index)
+                # pick bottom-most existing number if any
                 nz = np.nonzero(column)[0]
                 if nz.size > 0:
-                    top_idx = nz[0]  # from top
-                    val = int(column[top_idx])
-                    column[top_idx] = 0
+                    bottom_idx = nz[-1]
+                    val = int(column[bottom_idx])
+                    column[bottom_idx] = 0
                     self.selection[:] = (1, val)
                     reward += self.rewards.valid_action
                 else:
@@ -118,19 +118,20 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
             # Manual fall – count as valid action and apply an extra fall tick
             reward += self.rewards.valid_action
 
-        # Apply scheduled falls for this step
+        # Advance time and handle falling
         falls = self.schedule.advance_step(dt=1.0)
-        for _ in range(falls):
+        if action == 3:
+            # Manual fall: ignore scheduled falls this step; apply exactly one row fall
             if self._fall_tick():
                 reward += self.rewards.overflow
                 terminated = True
-                break
-
-        # Manual fall adds an additional tick within the same step
-        if action == 3 and not terminated:
-            if self._fall_tick():
-                reward += self.rewards.overflow
-                terminated = True
+        else:
+            # Apply scheduled falls for this step
+            for _ in range(falls):
+                if self._fall_tick():
+                    reward += self.rewards.overflow
+                    terminated = True
+                    break
 
         # Truncation check
         if self.schedule.truncated and not terminated:

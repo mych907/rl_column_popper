@@ -12,8 +12,8 @@ def test_board_spawn_constraints_and_pops():
     from column_popper.core.board import Board
 
     rng_seed = 123
-    board = Board(height=8, width=3, number_pool=(1, 2, 3), seed=rng_seed)
-    assert board.grid.shape == (8, 3)
+    board = Board(height=12, width=3, number_pool=(1, 2, 3), seed=rng_seed)
+    assert board.grid.shape == (12, 3)
     assert board.grid.dtype == np.int32
 
     # Fill a column with a pattern and test pop logic

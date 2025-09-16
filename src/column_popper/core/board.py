@@ -8,7 +8,7 @@ import numpy as np
 
 @dataclass
 class Board:
-    height: int = 8
+    height: int = 12
     width: int = 3
     number_pool: Sequence[int] = (1, 2, 3)
     seed: int | None = None

@@ -27,7 +27,7 @@ def test_env_contract_spaces_and_info():
         sel_space = obs_space["selection"]
         assert isinstance(board_space, Box)
         assert isinstance(sel_space, Box)
-        assert tuple(board_space.shape) == (8, 3)
+        assert tuple(board_space.shape) == (12, 3)
         assert sel_space.shape == (2,)
         assert board_space.dtype == np.int32
         assert sel_space.dtype == np.int32
