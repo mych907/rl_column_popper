@@ -1,5 +1,8 @@
 # Column Popper
 
+![Column Popper Gameplay](images/capture.png)
+
+
 Column Popper is a terminal-playable number puzzle that also functions as a Gymnasium-compatible reinforcement learning environment. Numbers fall into three columns on a schedule; you pick up from a column and drop into another to make vertical triples that pop for points. The game ends on overflow or when time runs out. The environment is deterministic when seeded.
 
 - Env ID: `SpecKitAI/ColumnPopper-v1`
