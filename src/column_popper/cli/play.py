@@ -31,8 +31,14 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901
     parser.add_argument("--ui", choices=["auto", "curses", "ansi"], default="auto")
     args = parser.parse_args(argv)
 
+    # Human mode uses wall time for falling schedule; start at 3s per fall and ramp faster
     env: gym.Env[dict[str, Any], int] = gym.make(
-        "SpecKitAI/ColumnPopper-v1", disable_env_checker=True, seed=args.seed
+        "SpecKitAI/ColumnPopper-v1",
+        disable_env_checker=True,
+        seed=args.seed,
+        use_wall_time=True,
+        initial_fall_interval=3.0,
+        schedule_curve=[(20.0, 2.0), (40.0, 1.0)],
     )
     try:
         if args.mode == "play":

@@ -23,6 +23,9 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
         strict_invalid: bool = False,
         include_time_left_norm: bool = False,
         reward_preset: RewardPreset | None = None,
+        use_wall_time: bool = False,
+        initial_fall_interval: float = 1.0,
+        schedule_curve: list[tuple[float, float]] | None = None,
     ) -> None:
         super().__init__()
         self._seed = seed
@@ -30,11 +33,19 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
         self.game_duration = float(game_duration)
         self.include_time_left_norm = include_time_left_norm
         self.rewards = reward_preset or get_preset("default")
+        self.use_wall_time = use_wall_time
+        self._initial_fall_interval = float(initial_fall_interval)
+        self._schedule_curve = schedule_curve or []
 
         self.board = Board(seed=seed)
         self.selection = np.zeros((2,), dtype=np.int32)  # [is_selected, value]
         self.score = 0.0
-        self.schedule = Schedule(game_duration=self.game_duration, initial_interval=1.0)
+        self.schedule = Schedule(
+            game_duration=self.game_duration,
+            initial_interval=self._initial_fall_interval,
+            curve=list(self._schedule_curve),
+        )
+        self._last_wall_time = 0.0
 
         # Observation: Dict(board:int32[8,3], selection:int32[2], optional time_left_norm)
         obs_spaces: dict[str, spaces.Space[Any]] = {
@@ -62,7 +73,15 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
         self.board = Board(seed=self._seed)
         self.selection = np.zeros((2,), dtype=np.int32)
         self.score = 0.0
-        self.schedule = Schedule(game_duration=self.game_duration, initial_interval=1.0)
+        self.schedule = Schedule(
+            game_duration=self.game_duration,
+            initial_interval=self._initial_fall_interval,
+            curve=list(self._schedule_curve),
+        )
+        if self.use_wall_time:
+            import time
+
+            self._last_wall_time = time.perf_counter()
         return self._obs(), self._info(pops_this_step=0)
 
     def step(self, action: int) -> tuple[dict[str, Any], float, bool, bool, dict[str, Any]]:  # noqa: C901
@@ -119,7 +138,16 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
             reward += self.rewards.valid_action
 
         # Advance time and handle falling
-        falls = self.schedule.advance_step(dt=1.0)
+        if self.use_wall_time:
+            import time
+
+            now = time.perf_counter()
+            dt = max(0.0, now - self._last_wall_time)
+            self._last_wall_time = now
+        else:
+            dt = 1.0
+        falls = self.schedule.advance_step(dt=dt)
+
         if action == 3:
             # Manual fall: ignore scheduled falls this step; apply exactly one row fall
             if self._fall_tick():
