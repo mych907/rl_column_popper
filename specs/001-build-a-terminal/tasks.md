@@ -40,26 +40,26 @@
 - **Single project**: `src/`, `tests/` at repository root
 
 ## Phase 3.1: Setup
-- [ ] T001 Create project structure in `src/column_popper` and `tests/` per implementation plan
-- [ ] T002 Initialize Python project with `pyproject.toml` and install dependencies: `gymnasium`, `numpy`, `windows-curses`, `argparse`, `jsonlines`, `pytest`, `hypothesis`, `pytest-benchmark`, `mypy`, `ruff`, `black`, `hatchling`
-- [ ] T003 [P] Configure `ruff` and `black` in `pyproject.toml`
-- [ ] T004 [P] Configure `mypy` in `pyproject.toml`
-- [ ] T005 [P] Create `src/column_popper/version.py` with `__version__ = "0.1.0"`
+- [x] T001 Create project structure in `src/column_popper` and `tests/` per implementation plan
+- [x] T002 Initialize Python project with `pyproject.toml` and install dependencies: `gymnasium`, `numpy`, `windows-curses`, `argparse`, `jsonlines`, `pytest`, `hypothesis`, `pytest-benchmark`, `mypy`, `ruff`, `black`, `hatchling`
+- [x] T003 [P] Configure `ruff` and `black` in `pyproject.toml`
+- [x] T004 [P] Configure `mypy` in `pyproject.toml`
+- [x] T005 [P] Create `src/column_popper/version.py` with `__version__ = "0.1.0"`
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
-- [ ] T006 [P] Contract test for Gymnasium environment in `tests/contract/test_gym_env.py`. It should check the observation space, action space, and reward range.
-- [ ] T007 [P] Integration test for a full game loop in `tests/integration/test_game_loop.py`. It should cover picking up, dropping, popping, and game over conditions.
-- [ ] T008 [P] Unit test for the board logic in `tests/unit/test_board.py`. It should test adding numbers, checking for pops, and removing numbers.
+- [x] T006 [P] Contract test for Gymnasium environment in `tests/contract/test_gym_env.py`. It should check the observation space, action space, and reward range.
+- [x] T007 [P] Integration test for a full game loop in `tests/integration/test_game_loop.py`. It should cover picking up, dropping, popping, and game over conditions.
+- [x] T008 [P] Unit test for the board logic in `tests/unit/test_board.py`. It should test adding numbers, checking for pops, and removing numbers.
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
-- [ ] T009 [P] Implement the `Board` class in `src/column_popper/core/board.py`.
+- [x] T009 [P] Implement the `Board` class in `src/column_popper/core/board.py`.
 - [ ] T010 [P] Implement the `Schedule` class in `src/column_popper/core/schedule.py` to manage game ticks.
-- [ ] T011 Implement the Gymnasium environment in `src/column_popper/envs/column_popper_env.py`.
-- [ ] T012 Implement the ANSI renderer in `src/column_popper/render/ansi.py`.
-- [ ] T013 Implement the curses UI in `src/column_popper/render/curses_ui.py`.
+- [x] T011 Implement the Gymnasium environment in `src/column_popper/envs/column_popper_env.py`.
+- [x] T012 Implement the ANSI renderer in `src/column_popper/render/ansi.py`.
+- [x] T013 Implement the curses UI in `src/column_popper/render/curses_ui.py`.
 - [ ] T014 Implement reward presets in `src/column_popper/rewards/presets.py`.
-- [ ] T015 Implement the CLI for playing the game in `src/column_popper/cli/play.py`.
+- [x] T015 Implement the CLI for playing the game in `src/column_popper/cli/play.py`.
 - [ ] T016 Implement the CLI for rolling out a policy in `src/column_popper/cli/rollout.py`.
 - [ ] T017 Implement the CLI for streaming data in `src/column_popper/cli/protocol.py`.
 - [ ] T018 Implement utilities for run manifests in `src/column_popper/utils/manifest.py`.
