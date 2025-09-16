@@ -63,10 +63,10 @@ As a player, I want to play a column-based puzzle game in my terminal where I ca
 - **FR-009**: The system MUST support a headless mode for fast, non-visual simulation.
 - **FR-010**: The system MUST expose a Gym-compatible API, including observation space, action space, and reward signals.
 - **FR-011**: The game state MUST be deterministic when initialized with a specific seed.
-- **FR-012**: The observation for the RL agent MUST be a Dict with at least: `board` (int32 grid 8×3, 0=empty, values from number_pool), and `selection` (shape (2,) → [is_selected, value]); optionally `time_left_norm` in [0,1].
+- **FR-012**: The observation for the RL agent MUST be a Dict with at least: `board` (int32 grid 12×3, 0=empty, values from number_pool), and `selection` (shape (2,) → [is_selected, value]); optionally `time_left_norm` in [0,1].
 - **FR-013**: The action space MUST be `Discrete(4)` with: 0–2 → select/release on target column; 3 → manual fall.
 - **FR-014**: The reward function MUST follow FR-006 by default; alternate reward presets may be offered behind an explicit configuration flag.
-- **FR-015**: The board MUST be 8 rows by 3 columns; `number_pool` defaults to [1,2,3]; the spawn generator MUST avoid creating an immediate three-in-a-column from two identical cells directly beneath (per-column constraint).
+- **FR-015**: The board MUST be 12 rows by 3 columns; `number_pool` defaults to [1,2,3]; the spawn generator MUST avoid creating an immediate three-in-a-column from two identical cells directly beneath (per-column constraint).
 
 ### Key Entities *(include if feature involves data)*
 - **Game Board**: A 2D grid representing the play area, containing numbers or empty spaces.

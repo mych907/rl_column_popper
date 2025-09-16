@@ -4,14 +4,14 @@ This document describes the key entities and data structures for the Column Popp
 
 ## Game Board
 
-- **Description**: A fixed 8×3 grid representing the play area.
+- **Description**: A fixed 12×3 grid representing the play area.
 - **Fields**:
     - `grid`: A 2D NumPy array of dtype `int32`. `0` represents an empty space; non-zero values are from `number_pool`.
     - `width`: The number of columns (constant: `3`).
     - `height`: The number of rows (constant: `8`).
     - `number_pool`: Allowed piece values (default `[1,2,3]`).
 - **Validation**:
-    - The grid MUST be shape `(8, 3)` at all times.
+    - The grid MUST be shape `(12, 3)` at all times.
     - No negative numbers or values outside `number_pool` may appear.
     - Pops only remove triples and only in the acted column.
     - Spawn generator enforces: a new top cell avoids creating an immediate three-in-a-column from two identical cells directly beneath (per-column constraint).

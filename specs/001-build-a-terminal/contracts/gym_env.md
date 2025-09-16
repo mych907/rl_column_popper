@@ -10,7 +10,7 @@ This document defines the contract for the Column Popper Gymnasium environment, 
 
 The observation space is a `gym.spaces.Dict` with the following keys:
 
-- `board`: `gym.spaces.Box(low=0, high=9, shape=(8, 3), dtype=np.int32)` where 0 = empty and values come from `number_pool` (default [1,2,3]).
+- `board`: `gym.spaces.Box(low=0, high=9, shape=(12, 3), dtype=np.int32)` where 0 = empty and values come from `number_pool` (default [1,2,3]).
 - `selection`: `gym.spaces.Box(low=0, high=9, shape=(2,), dtype=np.int32)` interpreted as `[is_selected, value]`.
 - Optional (feature-flagged): `time_left_norm`: `gym.spaces.Box(low=0.0, high=1.0, shape=(1,), dtype=np.float32)`.
 
@@ -38,7 +38,7 @@ Reward range: `(-inf, inf)`
 
 ## Initial State & Determinism
 
-- Board shape is fixed at 8×3. The generator enforces a per-column constraint: a newly spawned top cell avoids creating an immediate three-in-a-column from two identical cells directly beneath.
+- Board shape is fixed at 12×3. The generator enforces a per-column constraint: a newly spawned top cell avoids creating an immediate three-in-a-column from two identical cells directly beneath.
 - With a fixed seed and action sequence, the observation sequence MUST be identical.
 
 ## Termination & Truncation

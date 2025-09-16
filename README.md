@@ -3,7 +3,7 @@
 Column Popper is a terminal-playable number puzzle that also functions as a Gymnasium-compatible reinforcement learning environment. Numbers fall into three columns on a schedule; you pick up from a column and drop into another to make vertical triples that pop for points. The game ends on overflow or when time runs out. The environment is deterministic when seeded.
 
 - Env ID: `SpecKitAI/ColumnPopper-v1`
-- Board: `8 x 3` (int32, `0` = empty, values from `[1,2,3]`)
+- Board: `12 x 3` (int32, `0` = empty, values from `[1,2,3]`)
 - Actions: `Discrete(4)` → `0,1,2` select/drop on target column; `3` manual fall
 - Observation: `Dict(board:int32[8,3], selection:int32[2], optional time_left_norm:float32[1])`
 
