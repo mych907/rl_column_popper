@@ -8,17 +8,9 @@ import gymnasium as gym
 from gymnasium import spaces
 
 from ..core.board import Board
+from ..core.schedule import Schedule
+from ..rewards.presets import RewardPreset, get_preset
 from ..version import __version__ as PKG_VERSION
-
-
-@dataclass
-class RewardPreset:
-    step_cost: float = -0.01
-    valid_action: float = 1.0
-    pop_cell: float = 3.0
-    overflow: float = -1.0
-    invalid_full_drop: float = -1.0
-    time_up: float = -0.5
 
 
 class ColumnPopperEnv(gym.Env):
@@ -38,13 +30,12 @@ class ColumnPopperEnv(gym.Env):
         self.strict_invalid = strict_invalid
         self.game_duration = float(game_duration)
         self.include_time_left_norm = include_time_left_norm
-        self.rewards = reward_preset or RewardPreset()
+        self.rewards = reward_preset or get_preset("default")
 
         self.board = Board(seed=seed)
         self.selection = np.zeros((2,), dtype=np.int32)  # [is_selected, value]
         self.score = 0.0
-        self.time_left = self.game_duration
-        self.fall_interval = 1.0  # simple placeholder schedule value
+        self.schedule = Schedule(game_duration=self.game_duration, initial_interval=1.0)
 
         # Observation: Dict(board:int32[8,3], selection:int32[2], optional time_left_norm)
         obs_spaces: Dict[str, gym.Space] = {
@@ -72,8 +63,7 @@ class ColumnPopperEnv(gym.Env):
         self.board = Board(seed=self._seed)
         self.selection = np.zeros((2,), dtype=np.int32)
         self.score = 0.0
-        self.time_left = self.game_duration
-        self.fall_interval = 1.0
+        self.schedule = Schedule(game_duration=self.game_duration, initial_interval=1.0)
         return self._obs(), self._info(pops_this_step=0)
 
     def step(self, action: int):
@@ -129,22 +119,22 @@ class ColumnPopperEnv(gym.Env):
             # Manual fall – count as valid action and apply an extra fall tick
             reward += self.rewards.valid_action
 
-        # Apply scheduled fall once per step
-        overflowed = self._fall_tick()
-        if overflowed:
-            reward += self.rewards.overflow
-            terminated = True
+        # Apply scheduled falls for this step
+        falls = self.schedule.advance_step(dt=1.0)
+        for _ in range(falls):
+            if self._fall_tick():
+                reward += self.rewards.overflow
+                terminated = True
+                break
 
         # Manual fall adds an additional tick within the same step
         if action == 3 and not terminated:
-            overflowed2 = self._fall_tick()
-            if overflowed2:
+            if self._fall_tick():
                 reward += self.rewards.overflow
                 terminated = True
 
-        # Time update and truncation check
-        self.time_left -= 1.0  # one unit per step for simplicity
-        if self.time_left <= 0.0:
+        # Truncation check
+        if self.schedule.truncated and not terminated:
             truncated = True
             reward += self.rewards.time_up
 
@@ -167,16 +157,19 @@ class ColumnPopperEnv(gym.Env):
             "selection": self.selection.astype(np.int32, copy=False),
         }
         if self.include_time_left_norm:
-            norm = np.array([max(0.0, min(1.0, self.time_left / self.game_duration))], dtype=np.float32)
+            norm = np.array(
+                [max(0.0, min(1.0, self.schedule.time_left / self.game_duration))],
+                dtype=np.float32,
+            )
             obs["time_left_norm"] = norm
         return obs
 
     def _info(self, *, pops_this_step: int) -> Dict[str, Any]:
         return {
             "score": float(self.score),
-            "time_left": float(max(0.0, self.time_left)),
+            "time_left": float(max(0.0, self.schedule.time_left)),
             "pops_this_step": int(pops_this_step),
-            "fall_interval": float(self.fall_interval),
+            "fall_interval": float(self.schedule.fall_interval),
             "seed": int(self._seed) if self._seed is not None else None,
             "version": PKG_VERSION,
         }

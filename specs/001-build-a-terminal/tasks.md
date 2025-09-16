@@ -54,11 +54,11 @@
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
 - [x] T009 [P] Implement the `Board` class in `src/column_popper/core/board.py`.
-- [ ] T010 [P] Implement the `Schedule` class in `src/column_popper/core/schedule.py` to manage game ticks.
+- [x] T010 [P] Implement the `Schedule` class in `src/column_popper/core/schedule.py` to manage game ticks.
 - [x] T011 Implement the Gymnasium environment in `src/column_popper/envs/column_popper_env.py`.
 - [x] T012 Implement the ANSI renderer in `src/column_popper/render/ansi.py`.
 - [x] T013 Implement the curses UI in `src/column_popper/render/curses_ui.py`.
-- [ ] T014 Implement reward presets in `src/column_popper/rewards/presets.py`.
+- [x] T014 Implement reward presets in `src/column_popper/rewards/presets.py`.
 - [x] T015 Implement the CLI for playing the game in `src/column_popper/cli/play.py`.
 - [ ] T016 Implement the CLI for rolling out a policy in `src/column_popper/cli/rollout.py`.
 - [ ] T017 Implement the CLI for streaming data in `src/column_popper/cli/protocol.py`.
