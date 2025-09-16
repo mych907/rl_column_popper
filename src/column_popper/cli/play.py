@@ -74,13 +74,15 @@ def main(argv: list[str] | None = None) -> int:
                         break
                 return 0
         else:
-            # Placeholder for rollout/stream modes
-            obs, info = env.reset(seed=args.seed)
-            for _ in range(100):
-                action = env.action_space.sample()
-                obs, reward, terminated, truncated, info = env.step(action)
-                if terminated or truncated:
-                    break
+            # Dispatch to subcommands for headless modes
+            if args.mode == "rollout":
+                from .rollout import main as rollout_main
+
+                return rollout_main([f"--seed={args.seed}", "--episodes=1"])  # defer arg parsing
+            if args.mode == "stream":
+                from .protocol import main as protocol_main
+
+                return protocol_main([f"--seed={args.seed}", "--episodes=1"])  # defer parsing
             return 0
     finally:
         env.close()

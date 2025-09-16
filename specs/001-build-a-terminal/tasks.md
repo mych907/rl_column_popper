@@ -60,8 +60,8 @@
 - [x] T013 Implement the curses UI in `src/column_popper/render/curses_ui.py`.
 - [x] T014 Implement reward presets in `src/column_popper/rewards/presets.py`.
 - [x] T015 Implement the CLI for playing the game in `src/column_popper/cli/play.py`.
-- [ ] T016 Implement the CLI for rolling out a policy in `src/column_popper/cli/rollout.py`.
-- [ ] T017 Implement the CLI for streaming data in `src/column_popper/cli/protocol.py`.
+- [x] T016 Implement the CLI for rolling out a policy in `src/column_popper/cli/rollout.py`.
+- [x] T017 Implement the CLI for streaming data in `src/column_popper/cli/protocol.py`.
 - [ ] T018 Implement utilities for run manifests in `src/column_popper/utils/manifest.py`.
 - [ ] T019 Implement utilities for random number generation in `src/column_popper/utils/rng.py`.
 
