@@ -62,7 +62,7 @@
 - [x] T015 Implement the CLI for playing the game in `src/column_popper/cli/play.py`.
 - [x] T016 Implement the CLI for rolling out a policy in `src/column_popper/cli/rollout.py`.
 - [x] T017 Implement the CLI for streaming data in `src/column_popper/cli/protocol.py`.
-- [ ] T018 Implement utilities for run manifests in `src/column_popper/utils/manifest.py`.
+- [x] T018 Implement utilities for run manifests in `src/column_popper/utils/manifest.py`.
 - [x] T019 Implement utilities for random number generation in `src/column_popper/utils/rng.py`.
 
 ## Phase 3.4: Integration
