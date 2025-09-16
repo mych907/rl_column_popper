@@ -22,8 +22,7 @@ if /I "%CMD%"=="watch" (
 )
 
 if /I "%CMD%"=="play" (
-  shift
-  column_popper --mode=play %*
+  column_popper --mode=play
   goto end
 )
 

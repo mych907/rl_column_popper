@@ -55,6 +55,12 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
         obs_spaces: dict[str, spaces.Space[Any]] = {
             "board": spaces.Box(low=0, high=9, shape=(12, 3), dtype=np.int32),
             "selection": spaces.Box(low=0, high=9, shape=(2,), dtype=np.int32),
+            # Selected position for renderers/policies: [row, col], -1 indicates none
+            "sel_pos": spaces.Box(
+                low=np.array([-1, -1], dtype=np.int32),
+                high=np.array([self.board.height - 1, self.board.width - 1], dtype=np.int32),
+                dtype=np.int32,
+            ),
         }
         if include_time_left_norm:
             obs_spaces["time_left_norm"] = spaces.Box(
