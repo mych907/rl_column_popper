@@ -120,16 +120,27 @@ class ColumnPopperEnv(gym.Env):
                         self.score += self.rewards.pop_cell * pops
                 else:
                     # invalid full-column drop
+                    reward += self.rewards.invalid_full_drop
                     if self.strict_invalid:
-                        reward += self.rewards.invalid_full_drop
                         terminated = True
-                    else:
-                        reward += 0.0  # already has step cost
             self.board.grid[:, col] = column
 
         elif action == 3:
-            # Manual fall – advance time by one tick; gravity not simulated in this minimal version
+            # Manual fall – count as valid action and apply an extra fall tick
             reward += self.rewards.valid_action
+
+        # Apply scheduled fall once per step
+        overflowed = self._fall_tick()
+        if overflowed:
+            reward += self.rewards.overflow
+            terminated = True
+
+        # Manual fall adds an additional tick within the same step
+        if action == 3 and not terminated:
+            overflowed2 = self._fall_tick()
+            if overflowed2:
+                reward += self.rewards.overflow
+                terminated = True
 
         # Time update and truncation check
         self.time_left -= 1.0  # one unit per step for simplicity
@@ -170,3 +181,24 @@ class ColumnPopperEnv(gym.Env):
             "version": PKG_VERSION,
         }
 
+    # Mechanics
+    def _fall_tick(self) -> bool:
+        """Advance the board by one falling tick.
+
+        For each column, shift all cells down by one row and spawn a new value at the top
+        using the board's spawn generator with the per-column constraint. If the bottom-most
+        cell is already occupied before shifting, this tick causes an overflow.
+
+        Returns True if overflow occurred.
+        """
+        overflow = False
+        for col in range(self.board.width):
+            column = self.board.grid[:, col]
+            if column[-1] != 0:
+                overflow = True
+            # shift down by one
+            column[1:] = column[:-1]
+            # spawn at top with constraint
+            column[0] = self.board.spawn_value_for_column(col)
+            self.board.grid[:, col] = column
+        return overflow
