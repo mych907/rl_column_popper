@@ -34,9 +34,13 @@ class Schedule:
 
     def advance_step(self, dt: float = 1.0) -> int:
         """Advance time by dt and return the number of auto fall events to apply."""
+        prev_interval = self.fall_interval
         self.elapsed += dt
         self.time_left = max(0.0, self.game_duration - self.elapsed)
         self._update_interval()
+        if self.fall_interval != prev_interval:
+            # Reset accumulator at boundary to avoid retroactive extra falls
+            self._accum = 0.0
         self._accum += dt
 
         falls = 0
