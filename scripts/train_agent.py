@@ -1,6 +1,7 @@
 import argparse
 import os
 from pathlib import Path
+from typing import Optional
 
 import gymnasium as gym
 import column_popper.envs  # register env
@@ -95,6 +96,18 @@ def main() -> None:
         except Exception:
             callback = None
 
+    # Optional: set up a CSV logger for SB3 progress (progress.csv)
+    # This records keys like train/entropy_loss and rollout/ep_rew_mean
+    # alongside time/total_timesteps. We'll also write our own metrics CSV below.
+    try:
+        from stable_baselines3.common.logger import configure  # type: ignore
+
+        log_dir = Path("models") / "logs"
+        os.makedirs(log_dir, exist_ok=True)
+        new_logger = configure(str(log_dir), ["stdout", "csv"])
+    except Exception:
+        new_logger = None  # type: ignore[assignment]
+
     model = PPO(
         "MultiInputPolicy",
         env,
@@ -105,7 +118,102 @@ def main() -> None:
         ent_coef=0.01,
         seed=args.seed,
     )
-    model.learn(total_timesteps=args.timesteps, callback=callback)
+    # Attach logger if available so SB3 writes progress.csv
+    if new_logger is not None:
+        model.set_logger(new_logger)
+
+    # Create a metrics writer that logs every 1000 timesteps
+    # It records train/entropy_loss (from SB3 logger) and evaluation mean reward
+    # computed via evaluate_policy on a separate eval env.
+    from stable_baselines3.common.callbacks import BaseCallback, CallbackList  # type: ignore
+    from stable_baselines3.common.evaluation import evaluate_policy  # type: ignore
+    import csv
+
+    metrics_path = args.model_out.parent / f"{args.model_out.name}_metrics.csv"
+
+    class MetricsCallback(BaseCallback):
+        def __init__(self, eval_env: gym.Env, eval_freq: int = 1000, n_eval_episodes: int = 5):
+            super().__init__()
+            self.eval_freq = int(max(1, eval_freq))
+            self.n_eval_episodes = int(max(1, n_eval_episodes))
+            self._last_dump: int = 0
+            self._csv_initialized = False
+            self.eval_env = eval_env
+
+        def _init_callback(self) -> None:
+            # Ensure CSV header exists
+            if not self._csv_initialized:
+                with open(metrics_path, "w", newline="") as f:
+                    writer = csv.writer(f)
+                    writer.writerow(["total_timesteps", "entropy_loss", "eval_mean_reward"])  # header
+                self._csv_initialized = True
+
+        def _on_step(self) -> bool:
+            # Log every eval_freq timesteps
+            if (self.num_timesteps - self._last_dump) >= self.eval_freq:
+                self._last_dump = self.num_timesteps
+
+                # Try to read the latest entropy loss from SB3 logger if present
+                entropy_loss: Optional[float] = None
+                try:
+                    log_dict = self.model.logger.get_log_dict()  # type: ignore[attr-defined]
+                    # train/entropy_loss is typically recorded by PPO.train()
+                    if "train/entropy_loss" in log_dict:
+                        val = log_dict["train/entropy_loss"]
+                        if isinstance(val, (int, float)):
+                            entropy_loss = float(val)
+                except Exception:
+                    entropy_loss = None
+
+                # Compute evaluation mean reward deterministically over N episodes
+                eval_mean_reward: Optional[float] = None
+                try:
+                    mean_r, _ = evaluate_policy(self.model, self.eval_env, n_eval_episodes=self.n_eval_episodes, deterministic=True, render=False)
+                    eval_mean_reward = float(mean_r)
+                except Exception:
+                    eval_mean_reward = None
+
+                # Append to CSV
+                with open(metrics_path, "a", newline="") as f:
+                    writer = csv.writer(f)
+                    writer.writerow([
+                        int(self.num_timesteps),
+                        ("" if entropy_loss is None else f"{entropy_loss:.6f}"),
+                        ("" if eval_mean_reward is None else f"{eval_mean_reward:.6f}"),
+                    ])
+            return True
+
+        def _on_training_end(self) -> None:
+            # Optionally perform a final eval at the end
+            try:
+                mean_r, _ = evaluate_policy(self.model, self.eval_env, n_eval_episodes=self.n_eval_episodes, deterministic=True, render=False)
+                with open(metrics_path, "a", newline="") as f:
+                    writer = csv.writer(f)
+                    writer.writerow([int(self.num_timesteps), "", f"{mean_r:.6f}"])
+            except Exception:
+                pass
+
+    # Build a fresh eval env (deterministic) for evaluation snapshots
+    eval_env = gym.make(
+        "SpecKitAI/ColumnPopper-v1",
+        seed=args.seed,
+        include_time_left_norm=True,
+        use_wall_time=False,
+        initial_fall_interval=args.initial_fall,
+        schedule_curve=parse_curve(args.fall_curve),
+    )
+    try:
+        from stable_baselines3.common.monitor import Monitor  # type: ignore
+        eval_env = Monitor(eval_env)
+    except Exception:
+        pass
+    metrics_cb = MetricsCallback(eval_env, eval_freq=1000, n_eval_episodes=5)
+    # Combine callbacks: epsilon decay (if any) and metrics collection
+    if callback is not None:
+        cb = CallbackList([callback, metrics_cb])
+    else:
+        cb = CallbackList([metrics_cb])
+    model.learn(total_timesteps=args.timesteps, callback=cb)
     model.save(str(args.model_out))
     env.close()
     print(f"Saved model to {args.model_out}.zip")
