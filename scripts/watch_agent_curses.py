@@ -35,7 +35,12 @@ def main() -> None:
 
     policy = load_policy(args.model)
 
-    env = gym.make("SpecKitAI/ColumnPopper-v1", seed=args.seed, use_wall_time=False)
+    env = gym.make(
+        "SpecKitAI/ColumnPopper-v1",
+        seed=args.seed,
+        use_wall_time=False,
+        include_time_left_norm=True,
+    )
 
     def _loop(stdscr):
         from column_popper.render.curses_ui import _draw_board
@@ -60,4 +65,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
