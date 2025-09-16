@@ -74,8 +74,9 @@
 ## Phase 3.5: Polish
 - [ ] T024 [P] Add unit tests for all new classes and functions.
 - [ ] T025 [P] Add performance benchmarks for the `step` function.
-- [ ] T026 [P] Add documentation and type hints to all public APIs.
+- [x] T026 [P] Add documentation and type hints to all public APIs.
 - [ ] T027 Run `ruff check .` and `mypy .` to ensure code quality.
+- [x] T028 [P] Add CI workflow (lint, types, tests) in `.github/workflows/ci.yml`.
 
 ## Dependencies
 - Setup (T001-T005) before everything.
