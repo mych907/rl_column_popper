@@ -66,10 +66,10 @@
 - [x] T019 Implement utilities for random number generation in `src/column_popper/utils/rng.py`.
 
 ## Phase 3.4: Integration
-- [ ] T020 Integrate the `Board` and `Schedule` into the `ColumnPopperEnv`.
-- [ ] T021 Integrate the ANSI and curses renderers with the game loop.
-- [ ] T022 Integrate the reward presets with the environment.
-- [ ] T023 Integrate the CLI commands with the game environment.
+- [x] T020 Integrate the `Board` and `Schedule` into the `ColumnPopperEnv`.
+- [x] T021 Integrate the ANSI and curses renderers with the game loop.
+- [x] T022 Integrate the reward presets with the environment.
+- [x] T023 Integrate the CLI commands with the game environment.
 
 ## Phase 3.5: Polish
 - [x] T024 [P] Add unit tests for all new classes and functions.
