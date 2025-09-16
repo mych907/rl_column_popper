@@ -159,10 +159,9 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
             self.board.grid[:, col] = column
 
         elif action == 3:
-            # Manual fall – valid action plus bonus; apply one fall tick only
+            # Manual fall – valid action plus small bonus; apply one fall tick only
             reward += self.rewards.valid_action
             reward += self.rewards.manual_fall_bonus
-            self.score += self.rewards.manual_fall_bonus
 
         # Advance time and handle falling
         if self.use_wall_time:

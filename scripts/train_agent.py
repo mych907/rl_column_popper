@@ -26,7 +26,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--initial-fall", type=float, default=3.0)
     parser.add_argument("--fall-curve", type=str, default="20:2,40:1")
-    parser.add_argument("--epsilon-fall", type=float, default=0.0, help="With probability epsilon, override action to manual fall (3) to encourage exploration.")
+    parser.add_argument("--epsilon-fall", type=float, default=0.05, help="With probability epsilon, override action to manual fall (3) to encourage exploration. Decays to 0 over training.")
     parser.add_argument(
         "--model-out",
         type=Path,
@@ -46,6 +46,7 @@ def main() -> None:
     base_env = gym.make(
         "SpecKitAI/ColumnPopper-v1",
         seed=args.seed,
+        include_time_left_norm=True,
         use_wall_time=False,
         initial_fall_interval=args.initial_fall,
         schedule_curve=parse_curve(args.fall_curve),
@@ -70,6 +71,30 @@ def main() -> None:
     else:
         env = base_env
 
+    # Optional: decay epsilon linearly to 0 over training
+    callback = None
+    if args.epsilon_fall > 0:
+        try:
+            from stable_baselines3.common.callbacks import BaseCallback  # type: ignore
+
+            class EpsilonDecayCallback(BaseCallback):
+                def __init__(self, wrapped_env: gym.Env, initial_eps: float, total_timesteps: int):
+                    super().__init__()
+                    self.wrapped_env = wrapped_env
+                    self.initial_eps = float(initial_eps)
+                    self.total_timesteps = max(1, int(total_timesteps))
+
+                def _on_step(self) -> bool:
+                    progress = min(1.0, self.num_timesteps / self.total_timesteps)
+                    new_eps = self.initial_eps * (1.0 - progress)
+                    if hasattr(self.wrapped_env, "eps"):
+                        setattr(self.wrapped_env, "eps", float(new_eps))
+                    return True
+
+            callback = EpsilonDecayCallback(env, args.epsilon_fall, args.timesteps)
+        except Exception:
+            callback = None
+
     model = PPO(
         "MultiInputPolicy",
         env,
@@ -77,9 +102,10 @@ def main() -> None:
         n_steps=2048,
         batch_size=512,
         learning_rate=3e-4,
+        ent_coef=0.01,
         seed=args.seed,
     )
-    model.learn(total_timesteps=args.timesteps)
+    model.learn(total_timesteps=args.timesteps, callback=callback)
     model.save(str(args.model_out))
     env.close()
     print(f"Saved model to {args.model_out}.zip")
