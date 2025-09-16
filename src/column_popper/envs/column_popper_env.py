@@ -1,0 +1,172 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Dict, Optional, Tuple
+
+import numpy as np
+import gymnasium as gym
+from gymnasium import spaces
+
+from ..core.board import Board
+from ..version import __version__ as PKG_VERSION
+
+
+@dataclass
+class RewardPreset:
+    step_cost: float = -0.01
+    valid_action: float = 1.0
+    pop_cell: float = 3.0
+    overflow: float = -1.0
+    invalid_full_drop: float = -1.0
+    time_up: float = -0.5
+
+
+class ColumnPopperEnv(gym.Env):
+    metadata = {"render_modes": ["ansi"], "render_fps": 30}
+
+    def __init__(
+        self,
+        *,
+        seed: Optional[int] = None,
+        game_duration: float = 60.0,
+        strict_invalid: bool = False,
+        include_time_left_norm: bool = False,
+        reward_preset: Optional[RewardPreset] = None,
+    ) -> None:
+        super().__init__()
+        self._seed = seed
+        self.strict_invalid = strict_invalid
+        self.game_duration = float(game_duration)
+        self.include_time_left_norm = include_time_left_norm
+        self.rewards = reward_preset or RewardPreset()
+
+        self.board = Board(seed=seed)
+        self.selection = np.zeros((2,), dtype=np.int32)  # [is_selected, value]
+        self.score = 0.0
+        self.time_left = self.game_duration
+        self.fall_interval = 1.0  # simple placeholder schedule value
+
+        # Observation: Dict(board:int32[8,3], selection:int32[2], optional time_left_norm)
+        obs_spaces: Dict[str, gym.Space] = {
+            "board": spaces.Box(low=0, high=9, shape=(8, 3), dtype=np.int32),
+            "selection": spaces.Box(low=0, high=9, shape=(2,), dtype=np.int32),
+        }
+        if include_time_left_norm:
+            obs_spaces["time_left_norm"] = spaces.Box(
+                low=0.0, high=1.0, shape=(1,), dtype=np.float32
+            )
+        self.observation_space = spaces.Dict(obs_spaces)
+        self.action_space = spaces.Discrete(4)
+
+        # RNG for any stochasticity (kept minimal here)
+        self._rng = np.random.Generator(np.random.PCG64(seed))
+
+    # Gym API
+    def reset(
+        self, *, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        if seed is not None:
+            self._seed = seed
+            self._rng = np.random.Generator(np.random.PCG64(seed))
+        # Reset game state
+        self.board = Board(seed=self._seed)
+        self.selection = np.zeros((2,), dtype=np.int32)
+        self.score = 0.0
+        self.time_left = self.game_duration
+        self.fall_interval = 1.0
+        return self._obs(), self._info(pops_this_step=0)
+
+    def step(self, action: int):
+        assert self.action_space.contains(action)
+
+        reward = 0.0
+        reward += self.rewards.step_cost
+
+        terminated = False
+        truncated = False
+        pops = 0
+
+        # Actions 0,1,2 operate on columns
+        if action in (0, 1, 2):
+            col = int(action)
+            is_sel, value = int(self.selection[0]), int(self.selection[1])
+            column = self.board.grid[:, col]
+
+            if is_sel == 0:
+                # pick topmost number if any (topmost = highest non-zero index)
+                nz = np.nonzero(column)[0]
+                if nz.size > 0:
+                    top_idx = nz[0]  # from top
+                    val = int(column[top_idx])
+                    column[top_idx] = 0
+                    self.selection[:] = (1, val)
+                    reward += self.rewards.valid_action
+                else:
+                    # invalid (empty column pick) – treat as no-op with small penalty already applied
+                    pass
+            else:
+                # drop into column if space exists
+                # find highest empty from top
+                zeros = np.where(column == 0)[0]
+                if zeros.size > 0:
+                    top_empty = zeros[0]
+                    column[top_empty] = value
+                    self.selection[:] = (0, 0)
+                    reward += self.rewards.valid_action
+                    # Pop in this column only
+                    pops = self.board.pop_triples_in_column(col)
+                    if pops:
+                        reward += self.rewards.pop_cell * pops
+                        self.score += self.rewards.pop_cell * pops
+                else:
+                    # invalid full-column drop
+                    if self.strict_invalid:
+                        reward += self.rewards.invalid_full_drop
+                        terminated = True
+                    else:
+                        reward += 0.0  # already has step cost
+            self.board.grid[:, col] = column
+
+        elif action == 3:
+            # Manual fall – advance time by one tick; gravity not simulated in this minimal version
+            reward += self.rewards.valid_action
+
+        # Time update and truncation check
+        self.time_left -= 1.0  # one unit per step for simplicity
+        if self.time_left <= 0.0:
+            truncated = True
+            reward += self.rewards.time_up
+
+        obs = self._obs()
+        info = self._info(pops_this_step=pops)
+        return obs, float(reward), bool(terminated), bool(truncated), info
+
+    # Rendering (ANSI minimal placeholder)
+    def render(self):  # type: ignore[override]
+        lines = []
+        for r in range(self.board.height):
+            row = self.board.grid[r, :]
+            lines.append(" ".join(str(int(x)) for x in row))
+        return "\n".join(lines)
+
+    # Helpers
+    def _obs(self) -> Dict[str, Any]:
+        obs: Dict[str, Any] = {
+            "board": self.board.grid.astype(np.int32, copy=False),
+            "selection": self.selection.astype(np.int32, copy=False),
+        }
+        if self.include_time_left_norm:
+            norm = np.array([max(0.0, min(1.0, self.time_left / self.game_duration))], dtype=np.float32)
+            obs["time_left_norm"] = norm
+        return obs
+
+    def _info(self, *, pops_this_step: int) -> Dict[str, Any]:
+        return {
+            "score": float(self.score),
+            "time_left": float(max(0.0, self.time_left)),
+            "pops_this_step": int(pops_this_step),
+            "fall_interval": float(self.fall_interval),
+            "seed": int(self._seed) if self._seed is not None else None,
+            "version": PKG_VERSION,
+        }
+

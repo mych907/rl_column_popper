@@ -1,0 +1,76 @@
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "column_popper"
+description = "Column Popper: terminal puzzle and Gymnasium RL environment"
+readme = "README.md"
+requires-python = ">=3.10"
+dynamic = ["version"]
+authors = [
+  { name = "Column Popper Team" }
+]
+license = { text = "Proprietary" }
+keywords = ["gymnasium", "reinforcement-learning", "game", "puzzle", "tui"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "License :: Other/Proprietary License",
+  "Environment :: Console",
+  "Topic :: Games/Entertainment",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+  "gymnasium>=0.29",
+  "numpy>=1.24",
+  "jsonlines>=4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.4",
+  "hypothesis>=6.88",
+  "pytest-benchmark>=4.0",
+  "mypy>=1.6",
+  "ruff>=0.6",
+  "black>=24.4",
+]
+win = [
+  "windows-curses>=2.3; platform_system == 'Windows'",
+]
+
+[project.scripts]
+column_popper = "column_popper.cli.play:main"
+
+[tool.hatch.version]
+path = "src/column_popper/version.py"
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = [
+  ".git",
+  ".venv",
+  "dist",
+  "build",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "W", "C90"]
+ignore = []
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unused_configs = true
+show_error_codes = true
+
