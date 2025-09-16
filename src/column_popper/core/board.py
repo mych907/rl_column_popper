@@ -45,25 +45,22 @@ class Board:
         return popped
 
     def spawn_value_for_column(self, col: int) -> int:
-        """Sample a spawn value avoiding an immediate triple on top of two identical.
+        """Sample a spawn value avoiding an immediate triple on the top three cells.
 
-        We model the typical stack behavior (numbers accumulate from the bottom).
-        The new spawn will eventually land on top of the current stack in this column.
-        To avoid instant triple formation, if the top two occupied cells in this column
-        are identical and non-zero, we avoid sampling that value.
+        This function is called AFTER the column has been shifted down by one during
+        a fall tick. The new value will be placed at row 0. To avoid creating an
+        immediate vertical triple at rows [0,1,2], we check the two directly beneath
+        (rows 1 and 2). If they are identical and non-zero, avoid that value.
         """
         assert 0 <= col < self.width
         pool = list(self.number_pool)
         column = self.grid[:, col]
 
-        # Extract the current stack values (bottom-up). Non-zero entries represent filled cells.
-        stack_vals = column[column != 0]
         avoid = None
-        if stack_vals.size >= 2:
-            top1 = int(stack_vals[-1])
-            top2 = int(stack_vals[-2])
-            if top1 != 0 and top1 == top2:
-                avoid = top1
+        if self.height >= 3:
+            a, b = int(column[1]), int(column[2])
+            if a != 0 and a == b:
+                avoid = a
 
         if avoid is not None and avoid in pool and len(pool) > 1:
             pool = [p for p in pool if p != avoid]

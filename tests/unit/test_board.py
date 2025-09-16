@@ -29,8 +29,10 @@ def test_board_spawn_constraints_and_pops():
 
     # Test spawn avoids immediate triple on top of two identical beneath
     board.grid[:, col] = 0
-    board.grid[-2:, col] = [1, 1]
-    # Simulate a spawn at the top row; value must not be 1
+    # After a fall shift, rows 1 and 2 are directly beneath the spawn position
+    board.grid[1, col] = 1
+    board.grid[2, col] = 1
+    # Sample a spawn at the top row; value must not be 1
     v = board.spawn_value_for_column(col)
     assert v in (1, 2, 3)
     assert v != 1, "Spawn must avoid forming instant triple"
