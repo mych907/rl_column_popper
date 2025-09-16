@@ -63,7 +63,7 @@
 - [x] T016 Implement the CLI for rolling out a policy in `src/column_popper/cli/rollout.py`.
 - [x] T017 Implement the CLI for streaming data in `src/column_popper/cli/protocol.py`.
 - [ ] T018 Implement utilities for run manifests in `src/column_popper/utils/manifest.py`.
-- [ ] T019 Implement utilities for random number generation in `src/column_popper/utils/rng.py`.
+- [x] T019 Implement utilities for random number generation in `src/column_popper/utils/rng.py`.
 
 ## Phase 3.4: Integration
 - [ ] T020 Integrate the `Board` and `Schedule` into the `ColumnPopperEnv`.
