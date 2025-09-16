@@ -29,7 +29,27 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901
     parser.add_argument("--mode", choices=["play", "rollout", "stream"], default="play")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--ui", choices=["auto", "curses", "ansi"], default="auto")
+    parser.add_argument("--initial-fall", type=float, default=3.0, help="Initial fall interval in seconds")
+    parser.add_argument(
+        "--fall-curve",
+        type=str,
+        default="20:2,40:1",
+        help="Comma-separated time:interval pairs (seconds), e.g., '20:2,40:1'",
+    )
     args = parser.parse_args(argv)
+
+    def parse_curve(s: str) -> list[tuple[float, float]]:
+        out: list[tuple[float, float]] = []
+        for seg in s.split(","):
+            seg = seg.strip()
+            if not seg:
+                continue
+            try:
+                t_str, i_str = seg.split(":", 1)
+                out.append((float(t_str), float(i_str)))
+            except Exception:
+                continue
+        return out
 
     # Human mode uses wall time for falling schedule; start at 3s per fall and ramp faster
     env: gym.Env[dict[str, Any], int] = gym.make(
@@ -37,8 +57,8 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901
         disable_env_checker=True,
         seed=args.seed,
         use_wall_time=True,
-        initial_fall_interval=3.0,
-        schedule_curve=[(20.0, 2.0), (40.0, 1.0)],
+        initial_fall_interval=args.initial_fall,
+        schedule_curve=parse_curve(args.fall_curve),
     )
     try:
         if args.mode == "play":

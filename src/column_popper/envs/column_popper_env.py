@@ -35,7 +35,8 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
         self.rewards = reward_preset or get_preset("default")
         self.use_wall_time = use_wall_time
         self._initial_fall_interval = float(initial_fall_interval)
-        self._schedule_curve = schedule_curve or []
+        # Default ramp: 3s -> 2s at 20s, then 1s at 40s
+        self._schedule_curve = schedule_curve or [(20.0, 2.0), (40.0, 1.0)]
 
         self.board = Board(seed=seed)
         self.selection = np.zeros((2,), dtype=np.int32)  # [is_selected, value]
