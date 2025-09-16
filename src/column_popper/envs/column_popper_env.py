@@ -24,7 +24,7 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
         include_time_left_norm: bool = False,
         reward_preset: RewardPreset | None = None,
         use_wall_time: bool = False,
-        initial_fall_interval: float = 1.0,
+        initial_fall_interval: float = 3.0,
         schedule_curve: list[tuple[float, float]] | None = None,
     ) -> None:
         super().__init__()
@@ -164,6 +164,9 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
             self._last_wall_time = now
         else:
             dt = 1.0
+        # In non-wall-time mode, model action duration as 0.1s per action
+        if not self.use_wall_time:
+            dt = 0.1
         falls = self.schedule.advance_step(dt=dt)
 
         if action == 3:
