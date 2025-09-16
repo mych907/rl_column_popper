@@ -1,4 +1,3 @@
-import pytest
 import numpy as np
 
 
@@ -6,7 +5,8 @@ def test_board_spawn_constraints_and_pops():
     """
     Board rules from data-model/spec:
     - Grid is 8x3 int32, 0=empty, values from number_pool
-    - Spawn generator avoids creating an immediate three-in-a-column from two identical cells beneath
+    - Spawn generator avoids creating an immediate three-in-a-column from two
+      identical cells beneath
     - Pops only remove vertical triples and only in the acted column
     """
     from column_popper.core.board import Board
@@ -34,4 +34,3 @@ def test_board_spawn_constraints_and_pops():
     v = board.spawn_value_for_column(col)
     assert v in (1, 2, 3)
     assert v != 1, "Spawn must avoid forming instant triple"
-

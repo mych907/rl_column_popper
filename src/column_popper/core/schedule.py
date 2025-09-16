@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Tuple
 
 
 @dataclass
@@ -15,7 +14,7 @@ class Schedule:
 
     game_duration: float = 60.0
     initial_interval: float = 1.0
-    curve: List[Tuple[float, float]] = field(default_factory=list)
+    curve: list[tuple[float, float]] = field(default_factory=list)
     # curve items are (elapsed_time_threshold, new_interval), applied when elapsed >= threshold
 
     def __post_init__(self) -> None:
@@ -50,4 +49,3 @@ class Schedule:
     @property
     def truncated(self) -> bool:
         return self.time_left <= 0.0
-

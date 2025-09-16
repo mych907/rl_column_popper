@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
-from typing import Any, Dict
+from typing import Any
 
 
 class AnsiRenderer:
@@ -12,14 +12,16 @@ class AnsiRenderer:
     def clear(self) -> None:
         print("\x1b[2J\x1b[H", end="")  # clear screen + home
 
-    def draw(self, obs: Dict[str, Any], info: Dict[str, Any]) -> None:
+    def draw(self, obs: dict[str, Any], info: dict[str, Any]) -> None:
         board = obs["board"]
         selection = obs["selection"]
 
         cols, _ = shutil.get_terminal_size((80, 24))
-        sep = "\n"
 
-        header = f"Column Popper  |  Score: {info.get('score', 0)}  |  Time Left: {int(info.get('time_left', 0))}s"
+        header = (
+            f"Column Popper  |  Score: {info.get('score', 0)}  |  Time Left: "
+            f"{int(info.get('time_left', 0))}s"
+        )
         print(header[: cols])
         print("=" * min(len(header), cols))
 
@@ -36,4 +38,3 @@ class AnsiRenderer:
             print("\nHolding: none")
 
         print("\nControls: a=col0  s=col1  d=col2  f=fall  q=quit")
-

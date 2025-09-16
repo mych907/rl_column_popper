@@ -1,10 +1,11 @@
-import pytest
+import gymnasium as gym
+import numpy as np
+from gymnasium.spaces import Box, Dict, Discrete
+
+import column_popper.envs  # noqa: F401
 
 
 def test_env_contract_spaces_and_info():
-    import gymnasium as gym
-    # Ensure env is registered by importing package envs
-    import column_popper.envs  # noqa: F401
 
     env_id = "SpecKitAI/ColumnPopper-v1"
 
@@ -16,8 +17,6 @@ def test_env_contract_spaces_and_info():
         assert hasattr(env, "action_space"), "Env must expose action_space"
 
         # Validate observation space structure
-        from gymnasium.spaces import Dict, Box, Discrete
-        import numpy as np
 
         assert isinstance(env.observation_space, Dict), "Observation must be a Dict"
         obs_space = env.observation_space
@@ -62,9 +61,6 @@ def test_env_contract_spaces_and_info():
 
 
 def test_env_determinism_with_seed():
-    import gymnasium as gym
-    import column_popper.envs  # noqa: F401
-    import numpy as np
 
     env_id = "SpecKitAI/ColumnPopper-v1"
     actions = [0, 1, 2, 3] * 5
@@ -84,7 +80,7 @@ def test_env_determinism_with_seed():
             frames2.append((o2, r2, t2, tr2))
 
         # Compare arrays and scalars element-wise
-        for (o1, r1, t1, tr1), (o2, r2, t2, tr2) in zip(frames1, frames2):
+        for (o1, r1, t1, tr1), (o2, r2, t2, tr2) in zip(frames1, frames2, strict=False):
             # Observations are dicts containing numpy arrays
             assert set(o1.keys()) == set(o2.keys())
             for k in o1:

@@ -6,9 +6,12 @@ except Exception:  # pragma: no cover
     pytest.skip("pytest-benchmark not installed", allow_module_level=True)
 
 
+import gymnasium as gym
+
+import column_popper.envs  # noqa: F401
+
+
 def test_env_step_benchmark(benchmark):
-    import gymnasium as gym
-    import column_popper.envs  # noqa: F401
 
     env = gym.make("SpecKitAI/ColumnPopper-v1", disable_env_checker=True, seed=123)
     try:
@@ -21,4 +24,3 @@ def test_env_step_benchmark(benchmark):
         benchmark(_do_step)
     finally:
         env.close()
-

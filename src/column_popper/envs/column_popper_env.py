@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
-import numpy as np
 import gymnasium as gym
+import numpy as np
 from gymnasium import spaces
 
 from ..core.board import Board
@@ -13,17 +12,17 @@ from ..rewards.presets import RewardPreset, get_preset
 from ..version import __version__ as PKG_VERSION
 
 
-class ColumnPopperEnv(gym.Env):
+class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
     metadata = {"render_modes": ["ansi"], "render_fps": 30}
 
     def __init__(
         self,
         *,
-        seed: Optional[int] = None,
+        seed: int | None = None,
         game_duration: float = 60.0,
         strict_invalid: bool = False,
         include_time_left_norm: bool = False,
-        reward_preset: Optional[RewardPreset] = None,
+        reward_preset: RewardPreset | None = None,
     ) -> None:
         super().__init__()
         self._seed = seed
@@ -38,7 +37,7 @@ class ColumnPopperEnv(gym.Env):
         self.schedule = Schedule(game_duration=self.game_duration, initial_interval=1.0)
 
         # Observation: Dict(board:int32[8,3], selection:int32[2], optional time_left_norm)
-        obs_spaces: Dict[str, gym.Space] = {
+        obs_spaces: dict[str, spaces.Space[Any]] = {
             "board": spaces.Box(low=0, high=9, shape=(8, 3), dtype=np.int32),
             "selection": spaces.Box(low=0, high=9, shape=(2,), dtype=np.int32),
         }
@@ -47,15 +46,15 @@ class ColumnPopperEnv(gym.Env):
                 low=0.0, high=1.0, shape=(1,), dtype=np.float32
             )
         self.observation_space = spaces.Dict(obs_spaces)
-        self.action_space = spaces.Discrete(4)
+        self.action_space = spaces.Discrete(4)  # type: ignore[assignment]
 
         # RNG for any stochasticity (kept minimal here)
         self._rng = np.random.Generator(np.random.PCG64(seed))
 
     # Gym API
     def reset(
-        self, *, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None
-    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        self, *, seed: int | None = None, options: dict[str, Any] | None = None
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
         if seed is not None:
             self._seed = seed
             self._rng = np.random.Generator(np.random.PCG64(seed))
@@ -66,7 +65,7 @@ class ColumnPopperEnv(gym.Env):
         self.schedule = Schedule(game_duration=self.game_duration, initial_interval=1.0)
         return self._obs(), self._info(pops_this_step=0)
 
-    def step(self, action: int):
+    def step(self, action: int) -> tuple[dict[str, Any], float, bool, bool, dict[str, Any]]:  # noqa: C901
         assert self.action_space.contains(action)
 
         reward = 0.0
@@ -92,7 +91,7 @@ class ColumnPopperEnv(gym.Env):
                     self.selection[:] = (1, val)
                     reward += self.rewards.valid_action
                 else:
-                    # invalid (empty column pick) – treat as no-op with small penalty already applied
+                    # invalid (empty column pick) – already has step cost applied
                     pass
             else:
                 # drop into column if space exists
@@ -143,7 +142,7 @@ class ColumnPopperEnv(gym.Env):
         return obs, float(reward), bool(terminated), bool(truncated), info
 
     # Rendering (ANSI minimal placeholder)
-    def render(self):  # type: ignore[override]
+    def render(self) -> str:  # type: ignore[override]
         lines = []
         for r in range(self.board.height):
             row = self.board.grid[r, :]
@@ -151,8 +150,8 @@ class ColumnPopperEnv(gym.Env):
         return "\n".join(lines)
 
     # Helpers
-    def _obs(self) -> Dict[str, Any]:
-        obs: Dict[str, Any] = {
+    def _obs(self) -> dict[str, Any]:
+        obs: dict[str, Any] = {
             "board": self.board.grid.astype(np.int32, copy=False),
             "selection": self.selection.astype(np.int32, copy=False),
         }
@@ -164,7 +163,7 @@ class ColumnPopperEnv(gym.Env):
             obs["time_left_norm"] = norm
         return obs
 
-    def _info(self, *, pops_this_step: int) -> Dict[str, Any]:
+    def _info(self, *, pops_this_step: int) -> dict[str, Any]:
         return {
             "score": float(self.score),
             "time_left": float(max(0.0, self.schedule.time_left)),

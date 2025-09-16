@@ -1,29 +1,31 @@
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 
-def _draw_board(stdscr, obs: Dict[str, Any], info: Dict[str, Any]) -> None:
+def _draw_board(stdscr: Any, obs: dict[str, Any], info: dict[str, Any]) -> None:
     board = obs["board"]
     selection = obs["selection"]
 
     stdscr.clear()
-    header = f"Column Popper  |  Score: {int(info.get('score', 0))}  |  Time Left: {int(info.get('time_left', 0))}s"
-    stdscr.addstr(0, 0, header)
-    stdscr.addstr(1, 0, "=" * len(header))
+    header1 = f"Column Popper  |  Score: {int(info.get('score', 0))}"
+    header2 = f"Time Left: {int(info.get('time_left', 0))}s"
+    stdscr.addstr(0, 0, header1)
+    stdscr.addstr(1, 0, header2)
+    stdscr.addstr(2, 0, "=" * max(len(header1), len(header2)))
 
     # Top -> bottom
     for r in range(board.shape[0]):
         row_vals = [str(int(x)) if int(x) != 0 else "." for x in board[r, :]]
-        stdscr.addstr(2 + r, 0, "  ".join(row_vals))
+        stdscr.addstr(3 + r, 0, "  ".join(row_vals))
 
     holding = "none" if int(selection[0]) == 0 else str(int(selection[1]))
-    stdscr.addstr(2 + board.shape[0] + 1, 0, f"Holding: {holding}")
-    stdscr.addstr(2 + board.shape[0] + 3, 0, "Controls: a=col0  s=col1  d=col2  f=fall  q=quit")
+    stdscr.addstr(3 + board.shape[0] + 1, 0, f"Holding: {holding}")
+    stdscr.addstr(3 + board.shape[0] + 3, 0, "Controls: a=col0  s=col1  d=col2  f=fall  q=quit")
     stdscr.refresh()
 
 
-def run(stdscr, env) -> None:
+def run(stdscr: Any, env: Any) -> None:
     stdscr.nodelay(False)
     stdscr.keypad(True)
 
@@ -48,4 +50,3 @@ def run(stdscr, env) -> None:
         _draw_board(stdscr, obs, info)
         if terminated or truncated:
             break
-

@@ -3,14 +3,15 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from typing import Any, Dict
+from typing import Any, TextIO
 
 import gymnasium as gym
+
 import column_popper.envs  # noqa: F401
 
 
-def _jsonable(x: Dict[str, Any]) -> Dict[str, Any]:
-    out: Dict[str, Any] = {}
+def _jsonable(x: dict[str, Any]) -> dict[str, Any]:
+    out: dict[str, Any] = {}
     for k, v in x.items():
         try:
             out[k] = v.tolist()
@@ -19,7 +20,7 @@ def _jsonable(x: Dict[str, Any]) -> Dict[str, Any]:
     return out
 
 
-def _read_action(stdin) -> int:
+def _read_action(stdin: TextIO) -> int:
     line = stdin.readline()
     s = (line or "").strip()
     try:
@@ -38,7 +39,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--include-time", action="store_true")
     args = parser.parse_args(argv)
 
-    env = gym.make(
+    env: gym.Env[dict[str, Any], int] = gym.make(
         "SpecKitAI/ColumnPopper-v1",
         disable_env_checker=True,
         seed=args.seed,
@@ -104,9 +105,10 @@ def main(argv: list[str] | None = None) -> int:
                     break
         return 0
     finally:
-        env.close()
+        from typing import cast
+
+        cast(Any, env).close()
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

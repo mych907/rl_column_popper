@@ -2,9 +2,18 @@ import json
 
 
 def test_run_manifest_roundtrip_and_files(tmp_path):
-    from column_popper.utils.manifest import RunManifest, write_json, append_jsonl
+    from column_popper.utils.manifest import (
+        RunManifest,
+        append_jsonl,
+        write_json,
+    )
 
-    m = RunManifest(env_id="SpecKitAI/ColumnPopper-v1", seed=42, reward_preset="default", meta={"k": 1})
+    m = RunManifest(
+        env_id="SpecKitAI/ColumnPopper-v1",
+        seed=42,
+        reward_preset="default",
+        meta={"k": 1},
+    )
     s = m.to_json()
     m2 = RunManifest.from_json(s)
     assert m2.env_id == m.env_id
@@ -26,4 +35,3 @@ def test_run_manifest_roundtrip_and_files(tmp_path):
     assert len(lines) == 2
     assert json.loads(lines[0])["a"] == 1
     assert json.loads(lines[1])["b"] == 2
-

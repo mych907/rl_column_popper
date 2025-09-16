@@ -2,34 +2,38 @@ from __future__ import annotations
 
 import argparse
 import sys
+from typing import Any
 
 import gymnasium as gym
+
 import column_popper.envs  # noqa: F401 ensure registration
 from column_popper.render.ansi import AnsiRenderer
 
 
-def _run_curses(env) -> int:
+def _run_curses(env: gym.Env[dict[str, Any], int]) -> int:
     try:
-        import curses  # type: ignore
+        import curses
         from column_popper.render import curses_ui
     except Exception:
         return 1
 
-    def _wrapped(stdscr):
+    def _wrapped(stdscr: Any) -> None:
         return curses_ui.run(stdscr, env)
 
-    curses.wrapper(_wrapped)  # type: ignore[attr-defined]
+    curses.wrapper(_wrapped)
     return 0
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None) -> int:  # noqa: C901
     parser = argparse.ArgumentParser(description="Play Column Popper")
     parser.add_argument("--mode", choices=["play", "rollout", "stream"], default="play")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--ui", choices=["auto", "curses", "ansi"], default="auto")
     args = parser.parse_args(argv)
 
-    env = gym.make("SpecKitAI/ColumnPopper-v1", disable_env_checker=True, seed=args.seed)
+    env: gym.Env[dict[str, Any], int] = gym.make(
+        "SpecKitAI/ColumnPopper-v1", disable_env_checker=True, seed=args.seed
+    )
     try:
         if args.mode == "play":
             # Choose UI
@@ -85,7 +89,9 @@ def main(argv: list[str] | None = None) -> int:
                 return protocol_main([f"--seed={args.seed}", "--episodes=1"])  # defer parsing
             return 0
     finally:
-        env.close()
+        from typing import Any as _Any, cast
+
+        cast(_Any, env).close()  # cast to Any to avoid strict typing on gym close
 
 
 if __name__ == "__main__":

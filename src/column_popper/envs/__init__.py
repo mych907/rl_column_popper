@@ -2,7 +2,6 @@ import gymnasium as gym
 
 from .column_popper_env import ColumnPopperEnv
 
-
 _ENV_ID = "SpecKitAI/ColumnPopper-v1"
 
 try:
@@ -15,4 +14,3 @@ except gym.error.Error:
     )
 
 __all__ = ["ColumnPopperEnv"]
-

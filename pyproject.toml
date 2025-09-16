@@ -73,4 +73,5 @@ warn_unused_ignores = true
 warn_redundant_casts = true
 warn_unused_configs = true
 show_error_codes = true
-
+files = ["src/column_popper"]
+exclude = ["^tests/"]

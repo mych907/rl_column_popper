@@ -1,4 +1,6 @@
-import pytest
+import gymnasium as gym
+
+import column_popper.envs  # noqa: F401
 
 
 def test_basic_pick_drop_pop_and_overflow_sequence():
@@ -9,8 +11,6 @@ def test_basic_pick_drop_pop_and_overflow_sequence():
     - Overflow ends the game
     - Manual fall action advances time/rows
     """
-    import gymnasium as gym
-    import column_popper.envs  # noqa: F401
 
     env_id = "SpecKitAI/ColumnPopper-v1"
     env = gym.make(env_id, disable_env_checker=True)
@@ -44,8 +44,6 @@ def test_basic_pick_drop_pop_and_overflow_sequence():
 
 
 def test_time_up_truncation():
-    import gymnasium as gym
-    import column_popper.envs  # noqa: F401
 
     env_id = "SpecKitAI/ColumnPopper-v1"
     env = gym.make(env_id, disable_env_checker=True)

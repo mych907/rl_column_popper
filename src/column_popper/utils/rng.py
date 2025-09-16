@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
-from typing import Dict, Optional
 
 import numpy as np
 
@@ -30,10 +29,10 @@ class RngPool:
     Each key maps to its own independent child generator using a stable hash.
     """
 
-    seed: Optional[int]
+    seed: int | None
 
     def __post_init__(self) -> None:
-        self._cache: Dict[str, np.random.Generator] = {}
+        self._cache: dict[str, np.random.Generator] = {}
         # Maintain a root SeedSequence for documentation; child derivation uses hashing
         self._root_ss = np.random.SeedSequence(self.seed) if self.seed is not None else None
 
@@ -57,4 +56,3 @@ def split_generators(seed: int, n: int) -> list[np.random.Generator]:
 
 
 __all__ = ["make_rng", "RngPool", "split_generators"]
-
