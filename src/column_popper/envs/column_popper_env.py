@@ -46,6 +46,7 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
             curve=list(self._schedule_curve),
         )
         self._last_wall_time = 0.0
+        self._terminated = False
 
         # Observation: Dict(board:int32[8,3], selection:int32[2], optional time_left_norm)
         obs_spaces: dict[str, spaces.Space[Any]] = {
@@ -82,6 +83,7 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
             import time
 
             self._last_wall_time = time.perf_counter()
+        self._terminated = False
         return self._obs(), self._info(pops_this_step=0)
 
     def step(self, action: int) -> tuple[dict[str, Any], float, bool, bool, dict[str, Any]]:  # noqa: C901
@@ -153,12 +155,14 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
             if self._fall_tick():
                 reward += self.rewards.overflow
                 terminated = True
+                self._terminated = True
         else:
             # Apply scheduled falls for this step
             for _ in range(falls):
                 if self._fall_tick():
                     reward += self.rewards.overflow
                     terminated = True
+                    self._terminated = True
                     break
 
         # Truncation check
@@ -201,6 +205,21 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
             "seed": int(self._seed) if self._seed is not None else None,
             "version": PKG_VERSION,
         }
+
+    # Wall-time advancement for human UI
+    def wall_time_tick(self) -> None:
+        if not self.use_wall_time:
+            return
+        import time
+
+        now = time.perf_counter()
+        dt = max(0.0, now - self._last_wall_time)
+        self._last_wall_time = now
+        falls = self.schedule.advance_step(dt=dt)
+        for _ in range(falls):
+            if self._fall_tick():
+                self._terminated = True
+                break
 
     # Mechanics
     def _fall_tick(self) -> bool:

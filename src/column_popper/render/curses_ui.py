@@ -26,11 +26,15 @@ def _draw_board(stdscr: Any, obs: dict[str, Any], info: dict[str, Any]) -> None:
 
 
 def run(stdscr: Any, env: Any) -> None:
-    stdscr.nodelay(False)
+    stdscr.nodelay(True)
     stdscr.keypad(True)
 
     obs, info = env.reset()
     _draw_board(stdscr, obs, info)
+
+    import time
+    last_draw = time.perf_counter()
+    draw_interval = 1.0
 
     keymap = {
         ord("a"): 0,
@@ -41,6 +45,19 @@ def run(stdscr: Any, env: Any) -> None:
 
     while True:
         ch = stdscr.getch()
+        if ch == -1:
+            # No key: advance wall time and redraw periodically
+            if hasattr(env, "wall_time_tick"):
+                env.wall_time_tick()
+            now = time.perf_counter()
+            if now - last_draw >= draw_interval:
+                _draw_board(stdscr, env._obs(), env._info(pops_this_step=0))
+                last_draw = now
+            # Check for end conditions
+            if getattr(env, "_terminated", False) or env.schedule.truncated:
+                break
+            time.sleep(0.02)
+            continue
         if ch in (ord("q"), 27):  # q or ESC
             break
         if ch not in keymap:
