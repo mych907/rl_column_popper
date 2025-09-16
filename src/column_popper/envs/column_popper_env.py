@@ -221,6 +221,10 @@ class ColumnPopperEnv(gym.Env[dict[str, Any], int]):
                 self._terminated = True
                 break
 
+    # Peek current observation and info without stepping
+    def peek(self) -> tuple[dict[str, Any], dict[str, Any]]:
+        return self._obs(), self._info(pops_this_step=0)
+
     # Mechanics
     def _fall_tick(self) -> bool:
         """Advance the board by one falling tick.

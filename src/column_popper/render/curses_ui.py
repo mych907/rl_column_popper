@@ -43,18 +43,21 @@ def run(stdscr: Any, env: Any) -> None:
         ord("f"): 3,
     }
 
+    base = getattr(env, "unwrapped", env)
+
     while True:
         ch = stdscr.getch()
         if ch == -1:
             # No key: advance wall time and redraw periodically
-            if hasattr(env, "wall_time_tick"):
-                env.wall_time_tick()
+            if hasattr(base, "wall_time_tick"):
+                base.wall_time_tick()
             now = time.perf_counter()
             if now - last_draw >= draw_interval:
-                _draw_board(stdscr, env._obs(), env._info(pops_this_step=0))
+                obs, info = base.peek() if hasattr(base, "peek") else (obs, info)
+                _draw_board(stdscr, obs, info)
                 last_draw = now
             # Check for end conditions
-            if getattr(env, "_terminated", False) or env.schedule.truncated:
+            if getattr(base, "_terminated", False) or getattr(base, "schedule").truncated:
                 break
             time.sleep(0.02)
             continue
