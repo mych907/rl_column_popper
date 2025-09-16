@@ -26,6 +26,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--initial-fall", type=float, default=3.0)
     parser.add_argument("--fall-curve", type=str, default="20:2,40:1")
+    parser.add_argument("--epsilon-fall", type=float, default=0.0, help="With probability epsilon, override action to manual fall (3) to encourage exploration.")
     parser.add_argument(
         "--model-out",
         type=Path,
@@ -42,13 +43,32 @@ def main() -> None:
 
     os.makedirs(args.model_out.parent, exist_ok=True)
 
-    env = gym.make(
+    base_env = gym.make(
         "SpecKitAI/ColumnPopper-v1",
         seed=args.seed,
         use_wall_time=False,
         initial_fall_interval=args.initial_fall,
         schedule_curve=parse_curve(args.fall_curve),
     )
+
+    # Optional exploration wrapper to ensure agent experiences manual fall
+    if args.epsilon_fall > 0:
+        import numpy as np
+
+        class ManualFallEpsilonWrapper(gym.Wrapper):
+            def __init__(self, env: gym.Env, eps: float):
+                super().__init__(env)
+                self.eps = float(eps)
+                self.np_random = np.random.default_rng(args.seed)
+
+            def step(self, action):  # type: ignore[override]
+                if self.np_random.random() < self.eps:
+                    action = 3
+                return self.env.step(action)
+
+        env = ManualFallEpsilonWrapper(base_env, args.epsilon_fall)
+    else:
+        env = base_env
 
     model = PPO(
         "MultiInputPolicy",
@@ -67,4 +87,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
