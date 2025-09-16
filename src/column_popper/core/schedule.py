@@ -28,7 +28,8 @@ class Schedule:
 
     def _update_interval(self) -> None:
         for t, interval in sorted(self.curve):
-            if self.elapsed >= t:
+            # Apply change only after strictly passing the threshold
+            if self.elapsed > t:
                 self.fall_interval = float(interval)
 
     def advance_step(self, dt: float = 1.0) -> int:
