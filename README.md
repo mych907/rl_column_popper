@@ -1,6 +1,6 @@
 # Column Popper
 
-![Column Popper Gameplay](images/capture.png)
+![Column Popper Gameplay](images/ppo_agent_play.gif)
 
 
 Column Popper is a terminal-playable number puzzle that also functions as a Gymnasium-compatible reinforcement learning environment. Numbers fall into three columns on a schedule; you pick up from a column and drop into another to make vertical triples that pop for points. The game ends on overflow or when time runs out. The environment is deterministic when seeded.
@@ -9,6 +9,9 @@ Column Popper is a terminal-playable number puzzle that also functions as a Gymn
 - Board: `12 x 3` (int32, `0` = empty, values from `[1,2,3]`)
 - Actions: `Discrete(4)` → `0,1,2` select/drop on target column; `3` manual fall
 - Observation: `Dict(board:int32[12,3], selection:int32[2], sel_pos:int32[2], optional time_left_norm:float32[1])`
+
+## PPO training progress and diagnostics
+![Column Popper PPO Metrics](images/metrics.png)
 
 ## Quick Install
 

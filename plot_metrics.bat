@@ -1,0 +1,1 @@
+python scripts\plot_metrics.py --metrics models\ppo_column_popper_metrics.csv --progress models\logs\progress.csv --out images\metrics.png
